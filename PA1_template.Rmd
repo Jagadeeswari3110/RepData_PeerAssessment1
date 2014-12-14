@@ -7,19 +7,48 @@ output:
 
 
 ## Loading and preprocessing the data
-
+library(ggplot2)
+setwd("D:/winbackup/Courses/Reproducible research/assesment1/repdata-data-activity")
+df <- read.csv("activity.csv")
+df$date <- as.Date(df$date)
+df.completecases <- na.omit(df)
 
 
 ## What is mean total number of steps taken per day?
-
+steps.by.day <- aggregate(steps ~ date, data=df.completecases, FUN=sum)
+ggplot(steps.by.day, aes(x=steps)) +
+  geom_histogram(binwidth=2500, colour="black", fill="white")
+mean(steps.by.day$steps)
+median(steps.by.day$steps)
 
 
 ## What is the average daily activity pattern?
+steps.by.interval <- aggregate(steps ~ interval, data=df.completecases,
+                               FUN=mean)
+ggplot(steps.by.interval, aes(x=interval, y=steps)) +
+  geom_line(stat="identity")
+steps.by.interval$interval[which.max(steps.by.interval$steps)]
+length(which(is.na(df$steps)))
+mean(na.omit(df$steps))
+median(na.omit(df$steps))
 
 
 
 ## Imputing missing values
+df.new <- df
+df.new$steps[is.na(df.new$steps)] <- mean(na.omit(df$steps))
+steps.by.day.new <- aggregate(steps ~ date, data=df.new, FUN=sum)
+ggplot(steps.by.day.new, aes(x=steps)) +
+  geom_histogram(binwidth=2500, colour="black", fill="white")
+mean(steps.by.day.new$steps)
+median(steps.by.day.new$steps)
 
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+df.new$day[weekdays(as.Date(df.new$date)) %in% c("Saturday", "Sunday")] <- "weekend"
+df.new$day[!weekdays(as.Date(df.new$date)) %in% c("Saturday", "Sunday")] <- "weekday"
+df.new[, 4] <- as.factor(df.new[, 4])
+steps.new <- aggregate(steps ~ interval + day, data=df.new, FUN=mean)
+ggplot(steps.new, aes(x=interval, y=steps, group=1)) + geom_line() +
+  facet_wrap(~ day, ncol=1)
